@@ -11,13 +11,13 @@ MapReduce is a programming model and an associated implementation for processing
 ## Usage
 
 The computation takes a set of _input_ key/value pairs, and produces a set of _output_ key/value pairs.
-The user of the MapReduce library expresses the computation as two functions: _Map_ and _Reduce_.
+The user of the MapReduce library expresses the computation as two functions: `Map` and `Reduce`.
 
-_Map_, written by the user, takes an input pair and produces a set of _intermediate_ key/value pairs.
-The MapReduce library groups together all intermediate values associated with the same intermediate key _I_
-and passes them to the _Reduce_ function.
+`Map`, written by the user, takes an input pair and produces a set of _intermediate_ key/value pairs.
+The MapReduce library groups together all intermediate values associated with the same intermediate key `I`
+and passes them to the `Reduce` function.
 
-The _Reduce_ function, also written by the user, accepts an intermediate key _I_ and a set of values for that key.
+The `Reduce` function, also written by the user, accepts an intermediate key `I` and a set of values for that key.
 It merges together these values to form a possibly smaller set of values.
 
 Programs written in this functional style are automatically parallelized and executed on a large cluster of machines. 
@@ -49,27 +49,27 @@ could be implemented in MapReduce with code similar to the following pseudo-code
 
 ## Execution Overview
 
-_Map_ invocations are distributed across multiple machines by automatically partitioning the input data
-into a set of _M_ splits.
+`Map` invocations are distributed across multiple machines by automatically partitioning the input data
+into a set of `M` splits.
 
-_Reduce_ invocations are distributed by partitioning the intermediate key space into _R_ pieces 
-using a partitioning function (e.g. _hash(key) **mod** R_). 
-The number of partitions (_R_) and the partitioning function are specified by the user.
+`Reduce` invocations are distributed by partitioning the intermediate key space into `R` pieces 
+using a partitioning function (e.g. `hash(key) mod R`). 
+The number of partitions (`R`) and the partitioning function are specified by the user.
 
-![_Figure 1_ from the paper](https://i.imgur.com/BvFOTJj.png)
+![Figure 1 from the paper](https://i.imgur.com/BvFOTJj.png)
 
 1. The MapReduce library first partitions the input data.
 It then launches many instances of the program spread throughout the cluster.
 
 2. One of the instances serves as the master and the rest as workers.
 The master picks idle workers and assigns each one a task.
-There are _M_ map tasks and _R_ reduce tasks to assign.
+There are `M` map tasks and `R` reduce tasks to assign.
 
 3. A worker who is assigned a map task reads the contents of the corresponding input split.
-It parses key/value pairs out of the input data and passes each pair to the user-defined _Map_ function.
+It parses key/value pairs out of the input data and passes each pair to the user-defined `Map` function.
 
-4. The intermediate key/value pairs produced by the _Map_ function are written to local disk, 
-partitioned into _R_ regions by the partitioning function.
+4. The intermediate key/value pairs produced by the `Map` function are written to local disk, 
+partitioned into `R` regions by the partitioning function.
 The locations of these pairs on the local disk are passed back to the master, who is responsible for forwarding
 these locations to the reduce workers.
 
@@ -80,12 +80,12 @@ of the same key are grouped together.
 The sorting is needed because typically many different keys map to the same reduce task.
 
 6. The reduce worker iterates over the sorted intermediate data and for each unique intermediate key encountered, 
-it passes the key and the corresponding set of intermediate values to the user's _Reduce_ function. 
-The output of the _Reduce_ function is appended to a final output file for this reduce partition.
+it passes the key and the corresponding set of intermediate values to the user's `Reduce` function. 
+The output of the `Reduce` function is appended to a final output file for this reduce partition.
 
 7. When all map tasks and reduce tasks have been completed, the master notifies the user and the MapReduce execution terminates.
 
-After successful completion, the output of the MapReduce execution is available in the _R_ output files (one per reduce task).
+After successful completion, the output of the MapReduce execution is available in the `R` output files (one per reduce task).
 
 Typically, users pass these files as input to another MapReduce call, 
 or use them from another application that can handle partitioned input.
@@ -107,7 +107,7 @@ so that a new instance can take over using the checkpointed state.
 
 ## Semantics
 
-When the user-supplied _map_ and _reduce_ operators are deterministic functions of their input values,
+When the user-supplied `Map` and `Reduce` operators are deterministic functions of their input values,
 MapReduce produces the same output as would have been produced by a non-faulting sequential execution
 of the entire program.
 
@@ -120,7 +120,7 @@ This way, most input data can be read locally and consumes no network bandwidth.
 - When a MapReduce operation is close to completion, the master schedules backup executions
 of the remaining in-progress tasks in order to prevent laggards from delaying the entire operation.
 
-- When the user's _Reduce_ function is commutative and associative, an optional _Combiner_ function 
+- When the user's `Reduce` function is commutative and associative, an optional `Combiner` function 
 can be defined that partially _reduces_ the map outputs locally before the data is sent over the network.
 
 - When workers crash deterministically on certain records, MapReduce can be configured
