@@ -11,7 +11,7 @@ MapReduce is a programming model and an associated implementation for processing
 ## Usage
 
 The computation takes a set of _input_ key/value pairs, and produces a set of _output_ key/value pairs.
-The user of the MapReduce library expresses the computation as two functions: `Map` and `Reduce`.
+The user expresses the computation as two functions: `Map` and `Reduce`.
 
 `Map`, written by the user, takes an input pair and produces a set of _intermediate_ key/value pairs.
 The MapReduce library groups together all intermediate values associated with the same intermediate key `I`
@@ -21,9 +21,8 @@ The `Reduce` function, also written by the user, accepts an intermediate key `I`
 It merges together these values to form a possibly smaller set of values.
 
 Programs written in this functional style are automatically parallelized and executed on a large cluster of machines. 
-The run-time system takes care of the details of partitioning the input data, 
-scheduling the program's execution across a set of machines,
-handling machine failures, and managing the required inter-machine communication.
+The run-time system takes care of partitioning the input data, scheduling the program's execution across a set of machines, 
+handling machine failures, and managing inter-machine communication.
 
 This allows programmers without any experience with parallel and distributed systems
 to easily utilize the resources of a large distributed system.
@@ -58,10 +57,10 @@ The number of partitions (`R`) and the partitioning function are specified by th
 
 ![Figure 1 from the paper](https://i.imgur.com/BvFOTJj.png)
 
-1. The MapReduce library first partitions the input data.
-It then launches many instances of the program spread throughout the cluster.
+1. The MapReduce library first partitions the input data, 
+and then launches many instances of the program throughout the cluster.
 
-2. One of the instances serves as the master and the rest as workers.
+2. One of the instances is the master.
 The master picks idle workers and assigns each one a task.
 There are `M` map tasks and `R` reduce tasks to assign.
 
@@ -74,7 +73,7 @@ The locations of these pairs on the local disk are passed back to the master, wh
 these locations to the reduce workers.
 
 5. When a reduce worker is notified by the master about the locations for the region it was assigned, 
-it uses remote procedure calls to read the data from the local disks of the map workers.
+it uses RPCs to read the data from the local disks of the map workers.
 When it has read all intermediate data, it sorts it by the intermediate keys so that all occurrences 
 of the same key are grouped together. 
 The sorting is needed because typically many different keys map to the same reduce task.
@@ -95,8 +94,8 @@ or use them from another application that can handle partitioned input.
 ### Worker failure
 
 - Worker failure is detected via periodic heartbeats from the master.
-- All previously completed map tasks by the worker are rescheduled (because their output is only stored locally).
-- Similarly, any map or reduce task in progress on a failed worker is also rescheduled.
+- The completed map tasks by the worker are rescheduled (because their output is only stored locally).
+- Similarly, any _in-progress_ map or reduce task assigned to that worker is also rescheduled.
 - The master ignores duplicate completion reports for the same task.
 
 ### Master failure
@@ -107,9 +106,11 @@ so that a new instance can take over using the checkpointed state.
 
 ## Semantics
 
-When the user-supplied `Map` and `Reduce` operators are deterministic functions of their input values,
-MapReduce produces the same output as would have been produced by a non-faulting sequential execution
+- When `Map` and `Reduce` are deterministic functions of their input values,
+MapReduce produces the same output as a non-faulting sequential execution
 of the entire program.
+
+- MapReduce can move forward as long as the master and one worker is alive.
 
 ## Optimizations
 
@@ -118,10 +119,10 @@ to schedule tasks on machines that already have a replica of the task's input da
 This way, most input data can be read locally and consumes no network bandwidth.
 
 - When a MapReduce operation is close to completion, the master schedules backup executions
-of the remaining in-progress tasks in order to prevent laggards from delaying the entire operation.
+of the remaining in-progress tasks in order to prevent slow machines from delaying the entire operation.
 
 - When the user's `Reduce` function is commutative and associative, an optional `Combiner` function 
-can be defined that partially _reduces_ the map outputs locally before the data is sent over the network.
+can be defined that _partially reduces_ the map outputs locally before the data is sent over the network.
 
 - When workers crash deterministically on certain records, MapReduce can be configured
 to detect and skip these records.
